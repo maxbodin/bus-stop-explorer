@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { MapContainer, TileLayer, GeoJSON } from 'react-leaflet';
-import { GeoJSON as LeafletGeoJSON, LatLngExpression, Icon, marker, StyleFunction } from 'leaflet';
-import { LA_ROCHELLE, MAX_BOUNDS, RED_PIN, ZOOM } from "../variables";
+import React, {useEffect, useState} from "react";
+import {GeoJSON, MapContainer, TileLayer} from 'react-leaflet';
+import {GeoJSON as LeafletGeoJSON, Icon, LatLngExpression, marker, StyleFunction} from 'leaflet';
+import {LA_ROCHELLE, MAX_BOUNDS, RED_PIN, ZOOM} from "../variables";
 import "leaflet/dist/leaflet.css";
-import { GeoJsonObject } from "geojson";
+import {GeoJsonObject} from "geojson";
 
 
 const nameToImagePath: { [key: string]: string } = {
@@ -15,11 +15,10 @@ const nameToImagePath: { [key: string]: string } = {
 };
 
 
-interface BusStopMapProps {
-    json: { features: Feature[] };
-}
-
-export default function BusStopMap(props: BusStopMapProps) {
+export default function BusStopMap(props: {
+                                       json: { features: Feature[] };
+                                   }
+) {
     const [data, setData] = useState<GeoJsonObject | null>(null);
 
     useEffect(() => {
