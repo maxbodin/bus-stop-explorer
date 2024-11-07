@@ -1,11 +1,13 @@
 "use client";
 
-import React, {useEffect, useState} from "react";
+import {useEffect, useState} from "react";
 import {GeoJSON, MapContainer, TileLayer} from 'react-leaflet';
 import {GeoJSON as LeafletGeoJSON, Icon, LatLngExpression, marker, StyleFunction} from 'leaflet';
-import {LA_ROCHELLE, MAX_BOUNDS, RED_PIN, ZOOM} from "../variables";
-import "leaflet/dist/leaflet.css";
+import {LA_ROCHELLE, MAX_BOUNDS, RED_PIN, ZOOM} from "@/variables";
+import {Feature} from "@/types";
 import {GeoJsonObject} from "geojson";
+
+import "leaflet/dist/leaflet.css";
 
 
 const nameToImagePath: { [key: string]: string } = {
@@ -42,7 +44,7 @@ export default function BusStopMap(props: {
             features: uniqueFeatures
         } as GeoJsonObject);
 
-    }, []);
+    }, [data]);
 
     const pointToLayer = (feature: Feature, latlng: LatLngExpression) => {
         const stopName = feature.properties.name;
