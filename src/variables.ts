@@ -1,10 +1,10 @@
-import  { Icon, LatLng, LatLngBounds } from "leaflet";
+import {Icon, LatLng, LatLngBounds} from "leaflet";
 
 export const LA_ROCHELLE = {
     coords: new LatLng(46.1591, -1.1514)
 }
 
-export const MAX_BOUNDS =  new LatLngBounds(
+export const MAX_BOUNDS: LatLngBounds = new LatLngBounds(
     new LatLng(45.9, -1.5), // Southwest
     new LatLng(46.5, -0.5)  // Northeast
 )
@@ -23,4 +23,4 @@ export const RED_PIN = new Icon({
     iconAnchor: [12, 41],
     popupAnchor: [1, -34],
     shadowSize: [41, 41]
-  });
+});
