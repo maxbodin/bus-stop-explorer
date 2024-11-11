@@ -21,6 +21,7 @@ export default function BusStopMap(props: {
                                        json: { features: Feature[] };
                                    }
 ) {
+
     const [data, setData] = useState<GeoJsonObject | null>(null);
 
     useEffect(() => {
@@ -44,7 +45,8 @@ export default function BusStopMap(props: {
             features: uniqueFeatures
         } as GeoJsonObject);
 
-    }, [data]);
+    }, [props.json.features]);
+
 
     const pointToLayer = (feature: Feature, latlng: LatLngExpression) => {
         const stopName = feature.properties.name;
@@ -57,7 +59,7 @@ export default function BusStopMap(props: {
             })
             : RED_PIN;
 
-        return marker(latlng, { icon });
+        return marker(latlng, {icon});
     };
 
     const onEachFeature = (feature: Feature, layer: LeafletGeoJSON) => {
@@ -109,7 +111,6 @@ export default function BusStopMap(props: {
                     style={style}
                 />
             )}
-
 
         </MapContainer>
     );

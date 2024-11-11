@@ -1,24 +1,16 @@
-import { useEffect, useState } from "react";
+import {useState} from "react";
 import BusStopMap from "../components/BusStopMap";
 
-import { Feature } from "../types";
+import {Feature} from "../types";
 
-function App() {
-
+export default function App() {
     const [busData, setBusData] = useState<{ features: Feature[] }>();
 
-    useEffect(() => {
-        fetch("/data/la-rochelle-bus.geojson")
-            .then(response => response.json())
-            .then(data => setBusData(data));
-    }, []);
+    fetch("/data/la-rochelle-bus.geojson")
+        .then(response => response.json())
+        .then(data => setBusData(data));
 
     return (
-      busData ? (<BusStopMap json={busData}/>) :
-      (
-        <p>Map is loading</p>
-      )
+        busData ? <BusStopMap json={busData}/> : <p>Map is loading</p>
     );
 }
-
-export default App
