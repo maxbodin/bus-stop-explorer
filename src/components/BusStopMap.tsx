@@ -136,7 +136,8 @@ export default function BusStopMap(props: {
             )}
             {!isFilterOpen && (
                 <button
-                    className="filter-toggle-btn"
+                    className="absolute right-2.5 top-2.5 z-[1100] rounded-md border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-800 shadow-md transition hover:border-neutral-400 hover:bg-neutral-100"
+                    style={{ position: "absolute", right: "10px", top: "10px", zIndex: 1500, background: "white", border: "1px solid #d4d4d4", borderRadius: "6px", padding: "8px 12px", boxShadow: "0 2px 6px rgba(0,0,0,0.15)" }}
                     onClick={() => setIsFilterOpen(true)}
                     title="Afficher les filtres"
                 >
