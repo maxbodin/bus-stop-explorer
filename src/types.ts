@@ -1,4 +1,5 @@
 export interface FeatureProperties {
+    id?: string;
     name?: string;
     route_long_name?: string;
     route_short_name?: string;
