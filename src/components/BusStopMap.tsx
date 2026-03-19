@@ -1,13 +1,14 @@
 "use client";
 
-import {useMemo, useState} from "react";
+import {useMemo, useRef, useState} from "react";
 import {GeoJSON, MapContainer, TileLayer} from 'react-leaflet';
-import {GeoJSON as LeafletGeoJSON, Icon, LatLngExpression, marker, StyleFunction} from 'leaflet';
+import {GeoJSON as LeafletGeoJSON, Icon, LatLngExpression, Map as LeafletMap, marker, StyleFunction} from 'leaflet';
 import {LA_ROCHELLE, MAX_BOUNDS, RED_PIN, ZOOM} from "@/variables";
 import {Feature} from "@/types";
 import {useFilters} from "@/hooks/useFilters";
 import {GeoJsonObject} from "geojson";
 import FilterPanel from "./FilterPanel";
+import StopSearch, {StopSearchOption} from "./StopSearch";
 
 import "leaflet/dist/leaflet.css";
 
@@ -51,7 +52,7 @@ export default function BusStopMap(props: {
         [props.json.features]
     );
 
-    const [isFilterOpen, setIsFilterOpen] = useState<boolean>(true);
+    const [isFilterOpen, setIsFilterOpen] = useState<boolean>(false);
     const filters = useFilters(uniqueFeatures);
 
     const data = useMemo(() => ({
@@ -103,18 +104,25 @@ export default function BusStopMap(props: {
         return {}
     };
 
+    const mapRef = useRef<LeafletMap | null>(null);
+
+    const handleStopSelect = (stop: StopSearchOption) => {
+        const map = mapRef.current;
+        if (!map) return;
+        const targetZoom = Math.min(ZOOM.MAX, Math.max(ZOOM.DEFAULT + 3, ZOOM.MIN));
+        map.flyTo([stop.lat, stop.lng], targetZoom, { animate: true, duration: 0.8 });
+    };
+
     return (
-        <div style={{ position: 'relative', width: '100%', height: '100vh' }}>
+        <div className="relative h-screen w-full">
             <MapContainer
-                style={{
-                    width: "100%",
-                    height: "100vh",
-                }}
+                className="h-full w-full"
                 center={LA_ROCHELLE.coords}
                 maxBounds={MAX_BOUNDS}
                 zoom={ZOOM.DEFAULT}
                 maxZoom={ZOOM.MAX}
                 minZoom={ZOOM.MIN}
+                ref={mapRef}
             >
                 <TileLayer
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -137,13 +145,13 @@ export default function BusStopMap(props: {
             {!isFilterOpen && (
                 <button
                     className="absolute right-2.5 top-2.5 z-[1100] rounded-md border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-800 shadow-md transition hover:border-neutral-400 hover:bg-neutral-100"
-                    style={{ position: "absolute", right: "10px", top: "10px", zIndex: 1500, background: "white", border: "1px solid #d4d4d4", borderRadius: "6px", padding: "8px 12px", boxShadow: "0 2px 6px rgba(0,0,0,0.15)" }}
                     onClick={() => setIsFilterOpen(true)}
                     title="Afficher les filtres"
                 >
                     Filtres
                 </button>
             )}
+            <StopSearch features={uniqueFeatures} onSelect={handleStopSelect} />
         </div>
     );
 };

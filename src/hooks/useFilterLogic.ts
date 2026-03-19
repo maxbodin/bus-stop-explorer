@@ -58,7 +58,13 @@ const stopKeyFromFeature = (feature: Feature): string => {
 
 // Pre-compute stop → routes index using spatial proximity to polylines.
 export const buildStopRouteIndex = (features: Feature[], maxDistanceMeters = 200): Map<string, Set<string>> => {
-    const lines: { route: string; bbox: { minLat: number; maxLat: number; minLng: number; maxLng: number }; segments: Array<[[number, number], [number, number]]> }[] = [];
+    type LineEntry = {
+        route: string;
+        bbox: { minLat: number; maxLat: number; minLng: number; maxLng: number };
+        segments: Array<[[number, number], [number, number]]>;
+    };
+
+    const lines: LineEntry[] = [];
 
     features.forEach(feature => {
         if (feature.geometry.type !== "LineString") return;
@@ -79,6 +85,30 @@ export const buildStopRouteIndex = (features: Feature[], maxDistanceMeters = 200
         lines.push({ route, bbox: { minLat, maxLat, minLng, maxLng }, segments });
     });
 
+    // Grid index (spatial acceleration).
+    // Cell size ~= maxDistance to stay precise with minimal candidate count.
+    const cellSizeDeg = Math.max(0.001, maxDistanceMeters / 111320); // ~ degrees latitude.
+    const grid = new Map<string, number[]>(); // cell -> line indices.
+
+    const addToCell = (key: string, lineIndex: number) => {
+        const arr = grid.get(key);
+        if (arr) arr.push(lineIndex);
+        else grid.set(key, [lineIndex]);
+    };
+
+    for (let i = 0; i < lines.length; i++) {
+        const b = lines[i].bbox;
+        const minY = Math.floor(b.minLat / cellSizeDeg);
+        const maxY = Math.floor(b.maxLat / cellSizeDeg);
+        const minX = Math.floor(b.minLng / cellSizeDeg);
+        const maxX = Math.floor(b.maxLng / cellSizeDeg);
+        for (let y = minY; y <= maxY; y++) {
+            for (let x = minX; x <= maxX; x++) {
+                addToCell(`${y}:${x}`, i);
+            }
+        }
+    }
+
     const index = new Map<string, Set<string>>();
 
     features.forEach(feature => {
@@ -87,14 +117,27 @@ export const buildStopRouteIndex = (features: Feature[], maxDistanceMeters = 200
         if (!coords) return;
         const [lng, lat] = coords;
         const key = stopKeyFromFeature(feature);
-        for (const line of lines) {
+
+        // Evaluate only candidate lines from neighbor cells.
+        const cy = Math.floor(lat / cellSizeDeg);
+        const cx = Math.floor(lng / cellSizeDeg);
+        const candidates = new Set<number>();
+        for (let dy = -1; dy <= 1; dy++) {
+            for (let dx = -1; dx <= 1; dx++) {
+                const arr = grid.get(`${cy + dy}:${cx + dx}`);
+                if (!arr) continue;
+                for (const idx of arr) candidates.add(idx);
+            }
+        }
+        if (candidates.size === 0) return;
+
+        for (const idx of candidates) {
+            const line = lines[idx];
             const { minLat, maxLat, minLng, maxLng } = line.bbox;
             // quick bbox distance filter.
             const dLat = Math.max(0, Math.max(minLat - lat, lat - maxLat));
             const dLng = Math.max(0, Math.max(minLng - lng, lng - maxLng));
-            if (dLat === 0 && dLng === 0) {
-                // inside bbox.
-            } else {
+            if (dLat !== 0 || dLng !== 0) {
                 const bboxDist = haversineMeters(lat, lng, lat + dLat, lng + dLng);
                 if (bboxDist > maxDistanceMeters) continue;
             }
@@ -107,8 +150,12 @@ export const buildStopRouteIndex = (features: Feature[], maxDistanceMeters = 200
                 if (minDist <= maxDistanceMeters) break;
             }
             if (minDist <= maxDistanceMeters) {
-                if (!index.has(key)) index.set(key, new Set<string>());
-                index.get(key)!.add(line.route);
+                let set = index.get(key);
+                if (!set) {
+                    set = new Set<string>();
+                    index.set(key, set);
+                }
+                set.add(line.route);
             }
         }
     });

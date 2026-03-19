@@ -29,7 +29,7 @@ export default function App() {
     }, []);
 
     if (error) {
-        return <div style={{ padding: "20px", color: "red" }}>{error}</div>;
+        return <div className="p-5 text-red-600">{error}</div>;
     }
 
     return (
