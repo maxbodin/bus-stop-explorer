@@ -1,38 +1,28 @@
-import {useState, useEffect} from "react";
+import { useMemo, useState } from "react";
 import BusStopMap from "../components/BusStopMap";
-
-import {Feature} from "../types";
+import LoadingScreen from "@/components/LoadingScreen";
+import { useBusData } from "@/hooks/useBusData";
 
 export default function App() {
-    const [busData, setBusData] = useState<{ features: Feature[] }>();
-    const [error, setError] = useState<string>();
+    const { progress, busData, error } = useBusData();
+    const [loadingDone, setLoadingDone] = useState<boolean>(false);
 
-    useEffect(() => {
-        const fetchBusData = async () => {
-            try {
-                const dataUrl = `${import.meta.env.BASE_URL}data/la-rochelle-bus.geojson`;
-                const response = await fetch(dataUrl, { mode: "cors" });
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                const data = await response.json();
-                setBusData(data);
-                setError(undefined);
-            } catch (err) {
-                const message = err instanceof Error ? err.message : String(err);
-                console.error("Failed to load GeoJSON:", message);
-                setError(`Erreur lors du chargement des données: ${message}`);
-            }
-        };
-
-        fetchBusData();
-    }, []);
+    const shouldShowMap = useMemo(() => Boolean(busData) && loadingDone, [busData, loadingDone]);
+    const showLoadingScreen = !shouldShowMap;
 
     if (error) {
         return <div className="p-5 text-red-600">{error}</div>;
     }
 
     return (
-        busData ? <BusStopMap json={busData}/> : <p>Chargement de la carte...</p>
+        <div className="relative h-screen w-full bg-white">
+            {showLoadingScreen && (
+                <LoadingScreen
+                    progress={progress}
+                    onDone={() => setLoadingDone(true)}
+                />
+            )}
+            {shouldShowMap && busData && <BusStopMap json={busData} />}
+        </div>
     );
 }

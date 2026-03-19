@@ -1,6 +1,6 @@
 "use client";
 
-import {useMemo, useRef, useState} from "react";
+import {useCallback, useMemo, useRef, useState} from "react";
 import {GeoJSON, MapContainer, TileLayer} from 'react-leaflet';
 import {GeoJSON as LeafletGeoJSON, Icon, LatLngExpression, Map as LeafletMap, marker, StyleFunction} from 'leaflet';
 import {LA_ROCHELLE, MAX_BOUNDS, RED_PIN, ZOOM} from "@/variables";
@@ -66,7 +66,7 @@ export default function BusStopMap(props: {
     }, [filters.filterState.showStops, filters.filterState.showRouteGeometry, filters.filterState.visibleRoutes, filters.filteredFeatures.length]);
 
 
-    const pointToLayer = (feature: Feature, latlng: LatLngExpression) => {
+    const pointToLayer = useCallback((feature: Feature, latlng: LatLngExpression) => {
         const stopName = feature.properties.name;
         const icon = stopName && nameToImagePath[stopName]
             ? new Icon({
@@ -78,9 +78,9 @@ export default function BusStopMap(props: {
             : RED_PIN;
 
         return marker(latlng, {icon});
-    };
+    }, []);
 
-    const onEachFeature = (feature: Feature, layer: LeafletGeoJSON) => {
+    const onEachFeature = useCallback((feature: Feature, layer: LeafletGeoJSON) => {
         let popupContent = '';
         if (feature.geometry.type === "Point" && feature.properties.name) {
             popupContent = `<strong>${feature.properties.name}</strong><br>`;
@@ -91,9 +91,9 @@ export default function BusStopMap(props: {
       `;
         }
         layer.bindPopup(popupContent);
-    };
+    }, []);
 
-    const style: StyleFunction = (feature) => {
+    const style = useCallback<StyleFunction>((feature) => {
         if (feature?.geometry.type === "LineString") {
             return {
                 color: feature.properties?.route_color || "#007bff",
@@ -102,7 +102,7 @@ export default function BusStopMap(props: {
             };
         }
         return {}
-    };
+    }, []);
 
     const mapRef = useRef<LeafletMap | null>(null);
 
@@ -110,7 +110,14 @@ export default function BusStopMap(props: {
         const map = mapRef.current;
         if (!map) return;
         const targetZoom = Math.min(ZOOM.MAX, Math.max(ZOOM.DEFAULT + 3, ZOOM.MIN));
-        map.flyTo([stop.lat, stop.lng], targetZoom, { animate: true, duration: 0.8 });
+        requestAnimationFrame(() => {
+            map.flyTo([stop.lat, stop.lng], targetZoom, {
+                animate: true,
+                duration: 0.55,
+                easeLinearity: 0.2,
+                noMoveStart: true
+            });
+        });
     };
 
     return (
@@ -144,7 +151,7 @@ export default function BusStopMap(props: {
             )}
             {!isFilterOpen && (
                 <button
-                    className="absolute right-2.5 top-2.5 z-[1100] rounded-md border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-800 shadow-md transition hover:border-neutral-400 hover:bg-neutral-100"
+                    className="absolute right-2.5 top-2.5 z-1100 rounded-md border border-neutral-300  px-4 py-2 text-sm font-semibold text-neutral-800 shadow-md transition hover:border-neutral-400 hover:bg-neutral-100"
                     onClick={() => setIsFilterOpen(true)}
                     title="Afficher les filtres"
                 >
