@@ -7,8 +7,8 @@ export interface FilterState {
 /**
  * Initial state factory.
  */
-export const createInitialFilterState = (): FilterState => ({
+export const createInitialFilterState = (): FilterState => ( {
     visibleRoutes: new Set(),
     showRouteGeometry: true,
     showStops: true
-});
+} );

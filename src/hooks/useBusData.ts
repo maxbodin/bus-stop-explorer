@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Feature } from "@/types";
 
 export enum LoadingStage {
@@ -20,50 +20,50 @@ const stageToProgress = {
 };
 
 export const useBusData = () => {
-    const [stage, setStage] = useState<LoadingStage>(LoadingStage.Idle);
+    const [stage, setStage] = useState<LoadingStage>( LoadingStage.Idle );
     const [error, setError] = useState<string | undefined>();
-    const [busData, setBusData] = useState<{ features: Feature[] } | null>(null);
+    const [busData, setBusData] = useState<{ features: Feature[] } | null>( null );
 
-    useEffect(() => {
+    useEffect( () => {
         const fetchBusData = async () => {
             const startTime = Date.now();
-            setStage(LoadingStage.Initializing);
+            setStage( LoadingStage.Initializing );
             try {
-                const dataUrl = `${import.meta.env.BASE_URL}data/la-rochelle-bus.geojson`;
-                setStage(LoadingStage.Downloading);
-                const response = await fetch(dataUrl, { mode: "cors" });
+                const dataUrl = `${ import.meta.env.BASE_URL }data/la-rochelle-bus.geojson`;
+                setStage( LoadingStage.Downloading );
+                const response = await fetch( dataUrl, { mode: "cors" } );
 
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                    throw new Error( `HTTP error! status: ${ response.status }` );
                 }
 
                 const data = await response.json();
-                setStage(LoadingStage.Processing);
-                setBusData(data);
-                setError(undefined);
+                setStage( LoadingStage.Processing );
+                setBusData( data );
+                setError( undefined );
 
                 const elapsedTime = Date.now() - startTime;
                 const minLoadingTime = 1000;
 
                 if (elapsedTime < minLoadingTime) {
-                    setTimeout(() => {
-                        setStage(LoadingStage.Ready);
-                    }, minLoadingTime - elapsedTime);
+                    setTimeout( () => {
+                        setStage( LoadingStage.Ready );
+                    }, minLoadingTime - elapsedTime );
                 } else {
-                    setStage(LoadingStage.Ready);
+                    setStage( LoadingStage.Ready );
                 }
             } catch (err) {
-                const message = err instanceof Error ? err.message : String(err);
-                console.error("Failed to load GeoJSON:", message);
-                setError(`Erreur lors du chargement des données: ${message}`);
-                setStage(LoadingStage.Error);
+                const message = err instanceof Error ? err.message : String( err );
+                console.error( "Failed to load GeoJSON:", message );
+                setError( `Erreur lors du chargement des données: ${ message }` );
+                setStage( LoadingStage.Error );
             }
         };
 
         fetchBusData();
-    }, []);
+    }, [] );
 
-    const progress = useMemo(() => stageToProgress[stage], [stage]);
+    const progress = useMemo( () => stageToProgress[stage], [stage] );
 
     return { stage, progress, busData, error };
 };
